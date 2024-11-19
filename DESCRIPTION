@@ -1,7 +1,7 @@
 Package: hdbcp
 Type: Package
 Title: Bayesian Change Point Detection for High-Dimensional Data
-Version: 0.1.0
+Version: 1.0.0
 Authors@R: 
     c(person(given = "JaeHoon",
            family = "Kim", 
@@ -23,8 +23,8 @@ RoxygenNote: 7.3.2
 Imports: Rcpp, stats, dplyr
 LinkingTo: Rcpp, RcppArmadillo
 NeedsCompilation: yes
-Packaged: 2024-11-03 13:24:49 UTC; jhkim
+Packaged: 2024-11-19 03:35:23 UTC; jhkim
 Author: JaeHoon Kim [aut, cre],
   KyoungJae Lee [aut, ths]
 Repository: CRAN
-Date/Publication: 2024-11-05 10:20:07 UTC
+Date/Publication: 2024-11-19 03:50:02 UTC

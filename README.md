@@ -2,7 +2,12 @@
 Bayesian Change Point Detection for High-Dimensional Data
 
 ## Installation
-Up-to-date development version of hdbcp can be obtained from github:
+To install the released version of **hdbcp** from CRAN, use:
+```r
+install.packages("hdbcp")
+```
+
+Alternatively, to install the latest development version from GitHub:
 ```r
 ## install.packages("devtools")
 ## library(devtools)
@@ -26,8 +31,8 @@ X <- mvrnorm(500, mu1, sigma1)
 Y <- rbind(mvrnorm(250, mu1, sigma1), mvrnorm(250, mu2, sigma1))
 res_mxPBF1 <- mxPBF_mean(X, nws, alps)
 res_mxPBF2 <- mxPBF_mean(Y, nws, alps)
-majority_rule_mxPBF(res_mxPBF1, nws, 500)
-majority_rule_mxPBF(res_mxPBF2, nws, 500)
+majority_rule_mxPBF(res_mxPBF1)
+majority_rule_mxPBF(res_mxPBF2)
 
 # Covariance method
 sigma2 <- diag(10)
@@ -45,8 +50,8 @@ for (i in 1:10) {
 Z <- rbind(mvrnorm(250, mu1, sigma1), mvrnorm(250, mu1, sigma2))
 res_mxPBF3 <- mxPBF_cov(X, nws, alps)
 res_mxPBF4 <- mxPBF_cov(Z, nws, alps)
-majority_rule_mxPBF(res_mxPBF3, nws, 500)
-majority_rule_mxPBF(res_mxPBF4, nws, 500)
+majority_rule_mxPBF(res_mxPBF3)
+majority_rule_mxPBF(res_mxPBF4)
 
 # Combined method
 W <- rbind(mvrnorm(150,mu1,sigma1), mvrnorm(150,mu2,sigma1), mvrnorm(200,mu2,sigma2))
@@ -76,12 +81,12 @@ given_datasets <- generate_mean_datasets(n, p, signal_size, pre_proportion, pre_
 ## H0 data
 given_data <- matrix(given_datasets[,,1], n, p)
 res_mxPBF <- mxPBF_mean(given_data, nws, alps, FPR_want, n_sample, n_cores)
-majority_rule_mxPBF(res_mxPBF, nws, n)
+majority_rule_mxPBF(res_mxPBF)
 
 ## H1 data
 given_data <- matrix(given_datasets[,,2], n, p)
 res_mxPBF <- mxPBF_mean(given_data, nws, alps, FPR_want, n_sample, n_cores)
-majority_rule_mxPBF(res_mxPBF, nws, n)
+majority_rule_mxPBF(res_mxPBF)
 ```
 
 We can generate data with covariance changes and run the test.
@@ -107,10 +112,10 @@ given_datasets <- generate_cov_datasets(n, p, signal_size, sparse, single_point,
 ## H0 data
 given_data <- matrix(given_datasets[,,1], n, p)
 res_mxPBF <- mxPBF_cov(given_data, a0, b0, nws, alps, FPR_want, n_sample, n_cores, centering = "skip")
-majority_rule_mxPBF(res_mxPBF, nws, n)
+majority_rule_mxPBF(res_mxPBF)
 
 ## H1 data
 given_data <- matrix(given_datasets[,,2], n, p)
 res_mxPBF <- mxPBF_cov(given_data, a0, b0, nws, alps, FPR_want, n_sample, n_cores, centering = "skip")
-majority_rule_mxPBF(res_mxPBF, nws, n)
+majority_rule_mxPBF(res_mxPBF)
 ```

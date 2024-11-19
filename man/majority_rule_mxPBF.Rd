@@ -4,14 +4,10 @@
 \alias{majority_rule_mxPBF}
 \title{Majority Rule for Multiscale approach using mxPBF Results}
 \usage{
-majority_rule_mxPBF(result_mxPBFs, nws, n)
+majority_rule_mxPBF(res_mxPBF)
 }
 \arguments{
-\item{result_mxPBFs}{A list of results from \code{mxPBF_mean()} or \code{mxPBF_cov()}.}
-
-\item{nws}{A vector of window sizes used for \code{mxPBF_mean()} or \code{mxPBF_cov()}.}
-
-\item{n}{The total number of observations in the dataset.}
+\item{res_mxPBF}{A list of results from \code{mxPBF_mean()} or \code{mxPBF_cov()}.}
 }
 \value{
 A vector of final detected change points that are common across multiple windows based on majority rule.
@@ -31,7 +27,7 @@ single_point = 250, multiple_points = c(150,300,350), type = 5)
 nws <- c(25, 60, 100)
 alps <- seq(1,10,0.05)
 res_mxPBF <- mxPBF_mean(given_data, nws, alps)
-majority_rule_mxPBF(res_mxPBF, nws, n)
+majority_rule_mxPBF(res_mxPBF)
 }
 
 }

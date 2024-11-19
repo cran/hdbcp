@@ -2,9 +2,7 @@
 #'
 #' This function implements a majority rule-based post-processing approach to identify common change points across multiple window sizes from mxPBF results.
 #'
-#' @param result_mxPBFs A list of results from \code{mxPBF_mean()} or \code{mxPBF_cov()}.
-#' @param nws A vector of window sizes used for \code{mxPBF_mean()} or \code{mxPBF_cov()}.
-#' @param n The total number of observations in the dataset.
+#' @param res_mxPBF A list of results from \code{mxPBF_mean()} or \code{mxPBF_cov()}.
 #'
 #' @return A vector of final detected change points that are common across multiple windows based on majority rule.
 #'
@@ -21,63 +19,47 @@
 #' nws <- c(25, 60, 100)
 #' alps <- seq(1,10,0.05)
 #' res_mxPBF <- mxPBF_mean(given_data, nws, alps)
-#' majority_rule_mxPBF(res_mxPBF, nws, n)
+#' majority_rule_mxPBF(res_mxPBF)
 #' }
 #'
 #' @export
-majority_rule_mxPBF <- function(result_mxPBFs, nws, n) {
-  post_process <- function(detected_points_list, nw) {
-    W <- length(detected_points_list)
-    groups <- list()
-    for (w in 1:W) {
-      points <- detected_points_list[[w]]
-      points <- points[points %notin% unlist(groups)]
-      while (length(points)>0) {
-        grouping <- sapply(seq_along(points), function(i){
-          point <- points[i]
-          interval <- (point - nw + 1):(point + nw - 1)
-          interval <- interval[interval %notin% unlist(groups)]
-          points_in_group <- unlist(sapply(detected_points_list[w:W], function(x) x[x %in% interval]))
-          return(list(len = length(points_in_group), points = points_in_group))
-        })
-        if (max(unlist(grouping[1,])) <= 1) {
-          for (i in 1:ncol(grouping)) {
-            groups <- append(groups, grouping[2,i])
+majority_rule_mxPBF <- function(res_mxPBF) {
+  num_windows <- length(res_mxPBF)
+  majority_criterion <- num_windows / 2
+  selected_group_list <- list()
+  for (nw in 1:(floor(num_windows/2) + 1)) {
+    window <- res_mxPBF[[nw]]$Window_size
+    cps <- res_mxPBF[[nw]]$Change_points
+    cps <- cps[cps %notin% unlist(selected_group_list)] # Filter out the used points
+    if (length(cps)>0) {
+      candidate_group_list <- list()
+      for (i in 1:length(cps)) {
+        point <- cps[i]
+        interval <- c(point - window + 1, point + window - 1)
+        candidate_group <- numeric()
+        for (w in 1:num_windows) {
+          cps_in_wider_nws <- res_mxPBF[[w]]$Change_points
+          cps_in_wider_nws <- cps_in_wider_nws[cps_in_wider_nws %notin% unlist(selected_group_list)] # Filter out the used points
+          cps_within_interval <- cps_in_wider_nws[(cps_in_wider_nws >= interval[1] & cps_in_wider_nws <= interval[2])]
+          candidate_group <- c(candidate_group, cps_within_interval)
+        }
+        candidate_group_list[[i]] <- candidate_group
+      }
+      for (i in 1:length(candidate_group_list)) {
+        most_interval <- which(sapply(candidate_group_list, length) == max(sapply(candidate_group_list, length)))
+        if (max(sapply(candidate_group_list, length)) >= majority_criterion) {
+          if (length(most_interval) > 1) {
+            most_interval <- most_interval[which.min(sapply(candidate_group_list[most_interval], sample_variance))]
           }
-          break
+          selected_group <- candidate_group_list[[most_interval]]
+          selected_group_list <- append(selected_group_list, list(selected_group))
+          candidate_group_list[[most_interval]] <- NULL
         }
-        most_interval <- which(unlist(grouping[1,]) == max(unlist(grouping[1,])))
-        if (length(most_interval)>1) {
-          variances <- sapply(most_interval, function(i) var(unlist(grouping[2,i])))
-          most_interval <- most_interval[which.min(variances)]
-        }
-        groups <- append(groups,grouping[2,most_interval])
-        points <- points[points %notin% unlist(groups)]
       }
     }
-    return(groups)
   }
-  pre_groups <- lapply(result_mxPBFs, function(res) {
-    res$Change_points
-  })
-  post_groups <- post_process(pre_groups, nws[1])
-  major_groups <- post_groups[unlist(lapply(post_groups, function(x) length(x) >= length(pre_groups)/2))]
-  minor_groups <- post_groups[unlist(lapply(post_groups, function(x) length(x) < length(pre_groups)/2))]
-  for (i in seq_along(minor_groups)) {
-    loc <- mean(unlist(minor_groups[[i]]))
-    criteria <- length(pre_groups)
-    while(loc < nws[criteria] || loc >= n - nws[criteria]) {
-      if (criteria == 1) {
-        break
-      }
-      criteria = criteria - 1
-    }
-    if (length(unlist(minor_groups[[i]])) >= criteria / 2) {
-      major_groups <- append(major_groups, minor_groups[[i]])
-    }
+  if (length(selected_group_list) > 0) {
+    return(sort(sapply(selected_group_list, function(x) round(mean(x)))))
   }
-  if (length(major_groups) == 0) {
-    return(integer(0))
-  }
-  return(unlist(lapply(major_groups, function(x) round(mean(x)))))
+  return(numeric(0))
 }

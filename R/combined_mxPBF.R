@@ -5,14 +5,13 @@
 #' The function conducts a multiscale approach using the function.
 #'
 #' @param given_data An \eqn{(n \times p)} data matrix representing \eqn{n} observations and \eqn{p} variables.
-#' @param a0 A hyperparameter \eqn{a_0} used in the mxPBF (default: 0.01).
-#' @param b0 A hyperparameter \eqn{b_0} used in the mxPBF (default: 0.01).
 #' @param nws A set of window sizes for change point detection.
 #' @param alps A grid of alpha values used in the empirical False Positive Rate (FPR) method.
+#' @param a0 A hyperparameter \eqn{a_0} used in the mxPBF (default: 0.01).
+#' @param b0 A hyperparameter \eqn{b_0} used in the mxPBF (default: 0.01).
 #' @param FPR_want Desired False Positive Rate for selecting alpha, used in the empirical FPR method (default: 0.05).
 #' @param n_sample Number of simulated samples to estimate the empirical FPR, used in the empirical FPR method (default: 300).
 #' @param n_cores Number of threads for parallel execution via OpenMP (default: 1).
-#' @param centering Method for centering the data if it has a nonzero mean before analysis. Can be one of \code{"mean"}, \code{"median"}, or \code{"skip"} (default: "skip").
 #'
 #' @return A list provided. Each element in the list contains: \describe{
 #' \item{Result_cov}{A list result from the \code{mxPBF_cov()} function.}
@@ -29,7 +28,7 @@
 #' mu1 <- rep(0,10)
 #' sigma1 <- diag(10)
 #' X <- mvrnorm_cpp(500, mu1, sigma1)
-#' res1 <- mxPBF_combined(X, nws = nws, alps = alps)
+#' res1 <- mxPBF_combined(X, nws, alps)
 #'
 #' ## H1 data
 #' mu2 <- rep(1,10)
@@ -50,32 +49,19 @@
 #' Y2 <- mvrnorm_cpp(150, mu2, sigma1)
 #' Y3 <- mvrnorm_cpp(200, mu2, sigma2)
 #' Y <- rbind(Y1, Y2, Y3)
-#' res2 <- mxPBF_combined(Y, nws = nws, alps = alps)
+#' res2 <- mxPBF_combined(Y, nws, alps)
 #' }
 #'
 #' @export
-mxPBF_combined <- function(given_data, a0 = 0.01, b0 = 0.01, nws, alps, FPR_want = 0.05, n_sample = 300, n_cores = 1, centering = "skip"){
-  n <- nrow(given_data)
-  # Centering
-  if (centering == "mean") {
-    means <- colMeans(given_data)
-    centered_data <- sweep(given_data, 2, means, FUN = "-")
-  }
-  if (centering == "median") {
-    medians <- apply(given_data, 2, median)
-    centered_data <- sweep(given_data, 2, medians, FUN = "-")
-  }
-  if (centering == "skip") {
-    centered_data <- given_data
-  }
+mxPBF_combined <- function(given_data, nws, alps, a0 = 0.01, b0 = 0.01, FPR_want = 0.05, n_sample = 300, n_cores = 1){
   # Applying covariance method
-  res_cov <- mxPBF_cov(given_data = centered_data, a0 = a0, b0 = b0, nws = nws, alps = alps, FPR_want = FPR_want, n_sample = n_sample, n_cores = n_cores, centering = "skip")
+  res_cov <- mxPBF_cov(given_data = given_data, nws = nws, alps = alps, a0 = a0, b0 = b0, FPR_want = FPR_want, n_sample = n_sample, n_cores = n_cores)
 
-  changes_cov <- majority_rule_mxPBF(res_cov, nws, n)
+  changes_cov <- majority_rule_mxPBF(res_cov)
 
   res_mean_list <- list()
   changes_mean <- list()
-  segment_points <- c(1, sort(changes_cov), nrow(centered_data) + 1)
+  segment_points <- c(1, sort(changes_cov), nrow(given_data) + 1)
 
   for (i in 1:(length(segment_points) - 1)) {
     segment_length <- segment_points[i + 1] - segment_points[i]
@@ -84,7 +70,7 @@ mxPBF_combined <- function(given_data, a0 = 0.01, b0 = 0.01, nws, alps, FPR_want
     if (length(nws_mean)>0) {
       res_mean <- mxPBF_mean(data_segmented, nws_mean, alps, FPR_want, n_sample, n_cores)
       res_mean_list <- c(res_mean_list, setNames(list(res_mean), paste(segment_points[i], "to", segment_points[i + 1])))
-      changes_mean <- append(changes_mean, majority_rule_mxPBF(res_mean, nws_mean, n) + segment_points[i] - 1)
+      changes_mean <- append(changes_mean, majority_rule_mxPBF(res_mean) + segment_points[i] - 1)
     }
   }
   mxPBF_result <- list("Result_cov" = res_cov,

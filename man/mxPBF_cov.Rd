@@ -6,34 +6,31 @@
 \usage{
 mxPBF_cov(
   given_data,
-  a0 = 0.01,
-  b0 = 0.01,
   nws,
   alps,
+  a0 = 0.01,
+  b0 = 0.01,
   FPR_want = 0.05,
   n_sample = 300,
-  n_cores = 1,
-  centering = "skip"
+  n_cores = 1
 )
 }
 \arguments{
 \item{given_data}{An \eqn{(n \times p)} data matrix representing \eqn{n} observations and \eqn{p} variables.}
 
-\item{a0}{A hyperparameter \eqn{a_0} used in the mxPBF (default: 0.01).}
-
-\item{b0}{A hyperparameter \eqn{b_0} used in the mxPBF (default: 0.01).}
-
 \item{nws}{A set of window sizes for change point detection.}
 
 \item{alps}{A grid of alpha values used in the empirical False Positive Rate (FPR) method.}
+
+\item{a0}{A hyperparameter \eqn{a_0} used in the mxPBF (default: 0.01).}
+
+\item{b0}{A hyperparameter \eqn{b_0} used in the mxPBF (default: 0.01).}
 
 \item{FPR_want}{Desired False Positive Rate for selecting alpha, used in the empirical FPR method (default: 0.05).}
 
 \item{n_sample}{Number of simulated samples to estimate the empirical FPR, used in the empirical FPR method (default: 300).}
 
 \item{n_cores}{Number of threads for parallel execution via OpenMP (default: 1).}
-
-\item{centering}{Method for centering the data if it has a nonzero mean before analysis. Can be one of \code{"mean"}, \code{"median"}, or \code{"skip"} (default: "skip").}
 }
 \value{
 A list of length equal to the number of window sizes provided. Each element in the list contains: \describe{
@@ -55,8 +52,8 @@ alps <- seq(1,10,0.05)
 ## H0 data
 mu <- rep(0,10)
 sigma1 <- diag(10)
-X <- mvrnorm_cpp(500,mu,sigma1)
-res1 <- mxPBF_cov(X, nws = nws, alps = alps)
+X <- mvrnorm_cpp(500, mu, sigma1)
+res1 <- mxPBF_cov(X, nws, alps)
 
 ## H1 data
 mu <- rep(0,10)
@@ -73,10 +70,10 @@ for (i in 1:10) {
   }
 }
 sigma2 <- sigma2 + (abs(min(eigen(sigma2)$value))+0.1)*diag(10) # Make it nonsingular
-Y1 <- mvrnorm_cpp(250,mu,sigma1)
-Y2 <- mvrnorm_cpp(250,mu,sigma2)
+Y1 <- mvrnorm_cpp(250, mu, sigma1)
+Y2 <- mvrnorm_cpp(250, mu, sigma2)
 Y <- rbind(Y1, Y2)
-res2 <- mxPBF_cov(Y, nws = nws, alps = alps)
+res2 <- mxPBF_cov(Y, nws, alps)
 }
 
 }
